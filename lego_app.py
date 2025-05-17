@@ -308,16 +308,12 @@ class LegoApp:
         self.delete_button.pack(side=tk.LEFT, padx=5)
 
         # Display Mode Button
-        self.display_button = tk.Button(master, text="Показати галерею", command=self.show_display_mode, bg=FRAME_COLOR, fg=TEXT_COLOR) # Translated button text
+        self.display_button = tk.Button(master, text="Показати галерею", command=self.show_display_mode, bg=FRAME_COLOR, fg=TEXT_COLOR, font=("TkDefaultFont", 14, "bold")) # Translated button text, bold and bigger
         self.display_button.grid(row=2, column=0, pady=10)
 
         # Statistics Button
-        self.stats_button = tk.Button(master, text="Показати статистику", command=self.show_statistics, bg=FRAME_COLOR, fg=TEXT_COLOR) # Translated button text
+        self.stats_button = tk.Button(master, text="Показати статистику", command=self.show_statistics, bg=FRAME_COLOR, fg=TEXT_COLOR, font=("TkDefaultFont", 14, "bold")) # Translated button text, bold and bigger
         self.stats_button.grid(row=2, column=1, pady=10)
-
-        # About Button
-        self.about_button = tk.Button(master, text="Про програму", command=self.show_about_window, bg=FRAME_COLOR, fg=TEXT_COLOR) # Translated button text
-        self.about_button.grid(row=3, column=0, columnspan=2, pady=10)
 
     def add_lego(self):
         articul = self.articul_entry.get().strip()
@@ -339,15 +335,15 @@ class LegoApp:
             return
 
         try:
-            # all_parts should be 0 or 1, or empty
-            if all_parts_str == "":
+            # all_parts should be 0 or 1, or empty or 'N/A'
+            if all_parts_str == "" or all_parts_str.upper() == "N/A" or all_parts_str.upper() == "НІ" or all_parts_str.upper() == "ТАК":
                 all_parts = None
             else:
                 all_parts = int(all_parts_str)
                 if all_parts not in [0, 1]:
                     raise ValueError("Невірне значення для 'Всі деталі'") # Translated error
         except ValueError as e:
-            messagebox.showwarning("Невірне введення", f"'Всі деталі' має бути 0 або 1 ({e})") # Translated message
+            messagebox.showwarning("Невірне введення", f"'Всі деталі' має бути 0, 1 або N/A ({e})") # Translated message
             return
 
         if self.editing_articul:
@@ -421,6 +417,13 @@ class LegoApp:
             # Ensure the row has 6 elements (articul, name, part_count, all_parts, picture, series)
             # In case older entries without series are retrieved
             padded_row = list(row) + [None] * (6 - len(row))
+            # Replace all_parts (index 3) with 'Так'/'Ні'/'N/A'
+            if padded_row[3] == 1:
+                padded_row[3] = 'Так'
+            elif padded_row[3] == 0:
+                padded_row[3] = 'Ні'
+            else:
+                padded_row[3] = 'N/A'
             self.results_tree.insert("", tk.END, values=padded_row)
 
     def delete_selected_lego(self):
@@ -480,7 +483,7 @@ class LegoApp:
 
         # Display picture if available
         if picture:
-            img = get_image_from_url(picture, size=(200, 150))
+            img = get_image_from_url(picture, size=(350, 250))
             if img:
                 img_label = ttk.Label(details_frame, image=img) # Changed to ttk.Label
                 img_label.image = img # Keep a reference
@@ -529,7 +532,7 @@ class LegoApp:
         # Create a new top-level window for the display mode
         display_window = tk.Toplevel(self.master)
         display_window.title("Галерея LEGO") # Translated title
-        display_window.geometry("1000x800") # Set a larger default size
+        display_window.geometry("900x800") # Set a larger default size
         display_window.configure(bg=BG_COLOR) # Set background for display window
 
         # Create a Canvas and attach scrollbars
@@ -599,11 +602,32 @@ class LegoApp:
             # Display other information - Use the generic TLabel style for text labels within the item frame
             ttk.Label(item_frame, text=f"Серія: {series if series else 'N/A'}").pack(anchor=tk.W, pady=2) # Removed style, Changed to ttk.Label and translated
             ttk.Label(item_frame, text=f"Деталі: {part_count if part_count is not None else 'N/A'}").pack(anchor=tk.W, pady=2) # Removed style, Changed to ttk.Label and translated
+            # Add all_parts as Так/Ні/N/A
+            if all_parts == 1:
+                all_parts_str = 'Так'
+            elif all_parts == 0:
+                all_parts_str = 'Ні'
+            else:
+                all_parts_str = 'N/A'
+            ttk.Label(item_frame, text=f"Всі деталі: {all_parts_str}").pack(anchor=tk.W, pady=2)
 
             col_num += 1
             if col_num >= max_cols:
                 col_num = 0
                 row_num += 1
+
+        # Mousewheel scrolling (Windows and Linux)
+        def _on_mousewheel(event):
+            if event.num == 5 or event.delta == -120:
+                canvas.yview_scroll(1, "units")
+            elif event.num == 4 or event.delta == 120:
+                canvas.yview_scroll(-1, "units")
+
+        # Windows and MacOS
+        canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        # Linux (event.num 4=up, 5=down)
+        canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+        canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
 
     def show_statistics(self):
         """Displays database statistics in a new window."""
@@ -629,7 +653,7 @@ class LegoApp:
             # Create statistics window
             stats_window = tk.Toplevel(self.master)
             stats_window.title("Статистика Бази Даних") # Translated title
-            stats_window.geometry("300x300")
+            stats_window.geometry("300x400")
             stats_window.configure(bg=BG_COLOR) # Set background for stats window
 
             stats_frame = ttk.Frame(stats_window, padding="10")
@@ -649,24 +673,6 @@ class LegoApp:
         finally:
             if conn:
                 conn.close()
-
-    def show_about_window(self):
-        """Displays the About program window."""
-        about_window = tk.Toplevel(self.master)
-        about_window.title("Про програму") # Translated title
-        about_window.geometry("300x200")
-        about_window.configure(bg=BG_COLOR)
-
-        about_frame = ttk.Frame(about_window, padding="10")
-        about_frame.pack(expand=True, fill="both")
-
-        ttk.Label(about_frame, text="LEGO Database Application", font=('TkDefaultFont', 12, 'bold')).pack(pady=10)
-        ttk.Label(about_frame, text="Версія: 1.0").pack(pady=2) # Translated label
-        ttk.Label(about_frame, text="Зроблено adamarthis").pack(pady=2) # Translated label
-
-        # Add a close button
-        close_button = ttk.Button(about_frame, text="Закрити", command=about_window.destroy) # Translated button text
-        close_button.pack(pady=10)
 
 
 if __name__ == "__main__":
