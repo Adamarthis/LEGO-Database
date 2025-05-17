@@ -4,8 +4,11 @@ from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 import requests
 import io
+import os
 
-DATABASE_NAME = 'lego_database.db'
+# Ensure the database is created in the same folder as the script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_NAME = os.path.join(BASE_DIR, 'lego_database.db')
 
 # Define color scheme
 BG_COLOR = '#e0ffe0' # Light green background
@@ -668,6 +671,7 @@ class LegoApp:
 
 if __name__ == "__main__":
     initialize_database()
+
     root = tk.Tk()
     app = LegoApp(root)
     root.mainloop() 
