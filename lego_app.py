@@ -312,6 +312,9 @@ class LegoApp:
         self.stats_button = tk.Button(master, text="Показати статистику", command=self.show_statistics, bg=FRAME_COLOR, fg=TEXT_COLOR) # Translated button text
         self.stats_button.grid(row=2, column=1, pady=10)
 
+        # About Button
+        self.about_button = tk.Button(master, text="Про програму", command=self.show_about_window, bg=FRAME_COLOR, fg=TEXT_COLOR) # Translated button text
+        self.about_button.grid(row=3, column=0, columnspan=2, pady=10)
 
     def add_lego(self):
         articul = self.articul_entry.get().strip()
@@ -644,10 +647,27 @@ class LegoApp:
             if conn:
                 conn.close()
 
+    def show_about_window(self):
+        """Displays the About program window."""
+        about_window = tk.Toplevel(self.master)
+        about_window.title("Про програму") # Translated title
+        about_window.geometry("300x200")
+        about_window.configure(bg=BG_COLOR)
+
+        about_frame = ttk.Frame(about_window, padding="10")
+        about_frame.pack(expand=True, fill="both")
+
+        ttk.Label(about_frame, text="LEGO Database Application", font=('TkDefaultFont', 12, 'bold')).pack(pady=10)
+        ttk.Label(about_frame, text="Версія: 1.0").pack(pady=2) # Translated label
+        ttk.Label(about_frame, text="Зроблено adamarthis").pack(pady=2) # Translated label
+
+        # Add a close button
+        close_button = ttk.Button(about_frame, text="Закрити", command=about_window.destroy) # Translated button text
+        close_button.pack(pady=10)
+
 
 if __name__ == "__main__":
     initialize_database()
-
     root = tk.Tk()
     app = LegoApp(root)
     root.mainloop() 
