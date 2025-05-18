@@ -183,6 +183,7 @@ class LegoApp:
         self.master = master
         master.title("База Даних LEGO") # Translated title
         master.configure(bg=BG_COLOR) # Set main window background
+        master.bind('<Return>', lambda event: self.search_lego()) # Bind Enter key to search
 
         # Configure style for themed widgets
         style = ttk.Style()
